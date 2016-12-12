@@ -11,7 +11,7 @@ class SummaryListing(object):
         self._link = link
 
     def __repr__(self):
-        return "Listing name : " + self._event_name + ", Link : " + self._link
+        return str({'Listing name': self._event_name, 'Link': self._link})
 
 
 class EventInfo(object):
@@ -33,7 +33,8 @@ class EventInfo(object):
         self._description = ""
         self._website = ""
 
-    def _get_json(self):
+    def get_json(self):
+        """ JSON representation of a concert event. Note this  """
         return {
             'artist': self._artist,
             'city': self._city,
