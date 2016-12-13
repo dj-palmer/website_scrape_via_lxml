@@ -285,7 +285,6 @@ def do_WGT_scrape(max_pages=1):
     # Get listings on each search results page
     scraper = Scraper()
     scraper.update()
-    pdb.set_trace()
     scraper.set_max_page_num(max_pages)
     for pagenum in range(1, scraper._max_page_num+1):
         scraper.update(base_url % (pagenum))
