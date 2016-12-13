@@ -1,18 +1,22 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 import pdb
 import requests
 from lxml import html
 from concert_item import SummaryListing, EventInfo
 
-# Some global constants - Details of the website you want to scrape
-# listings from
+# Some global constants - Details of the website you want to scrape 
+# listings from. Where appropriate we can use specific classes the
+# website has for data items to search, rather than reference divisions of
+# the website that are likely to change per event
 URL = "http://www.wegottickets.com/searchresults/all"
-LISTING_CLASS = "event_link"
-EVENT_CLASS = "left full-width-mobile event-information event-width"
-SUPPORT_CLASS = "support"
-VENUE_CLASS = "venue-details"
+CLASS_LISTING = "event_link"
+CLASS_EVENT = "left full-width-mobile event-information event-width"
+CLASS_SUPPORT = "support"
+CLASS_VENUE = "venue-details"
 CLASS_PRICE = "BuyBox diptych block"
+CLASS_CONCESSION = "concession"
 
 
 class ScraperStore(object):
@@ -91,11 +95,15 @@ class Scraper(object):
 
             Results are stored in the _listings array
         """
-        listings = self._tree.xpath('//a[@class="%s"]' % (LISTING_CLASS))
+        listings = self._tree.xpath('//a[@class="%s"]' % (CLASS_LISTING))
         for listing in listings:
-            event_name = listing.xpath('text()')[0] or ""
-            link = listing.xpath('@href')[0] or ""
-            self.add_listing(SummaryListing(event_name, link))
+            try:
+                event_name = listing.xpath('text()')[0]
+                link = listing.xpath('@href')[0]
+                self.add_listing(SummaryListing(event_name, link))
+            except IndexError:
+                # we've not been able to find details, move onto the next
+                pass
 
         return self._listings
 
@@ -106,65 +114,89 @@ class Scraper(object):
             Results are stored in the _events array
         """
         for listing in self._listings:
-            self.update(listing._link)
-            self.get_event_details(listing._event_name, listing._link)
+            self.get_event_details(listing._link, listing._event_name)
 
         return self._events
 
-    def get_event_details(self, event_name="", link=""):
+    def get_event_details(self, link=_url, event_name=""):
         """ For our page, comb for event details using an xpath search
 
             Result is stored in the _events array
         """
-        print "Get_event_details called"
+        event_info = None
+
+        # Details we will try and scrape
+        artist=""
+        support_artists=""
+        city="",
+        loc="",
+        date_time=""
+
+        self.update(link)
         event = self._tree
 
-        # Get our event details, made up of name and support in form
-        #   <div class="left full-width-mobile event-information event-width">
-        #       <h1>main_event</h1>
-        #       <h4 class="support_act">bar</h4>
-        #   </div>
-        #
-        # Note: We could just get our event name from the one we got from
-        # the listing, but we may want to re-use this method directly.
-        event_details = event.xpath('//div[@class="%s"]' % (EVENT_CLASS))
-        event_name = event_details[0].xpath('./h1/text()')[0]
-        support_artists = event_details[0].xpath(
-                            './h4[@class="%s"]/text()' % (SUPPORT_CLASS)
-                          )[0]
-        # print html.tostring(support_artists[0], pretty_print=True, \
-        # method="html")
+        try:
+            # Get our event details, made up of artist and support in form
+            #   <div class="left full-width-mobile event-information event-width">
+            #       <h1>main_artist</h1>
+            #       <h4 class="support">support_act</h4>
+            #   </div>
+            #
+            # Note: We could just get our event name from the one we got from
+            # the listing, but allowing for use of this method on its own.
+            event_details = event.xpath('//div[@class="%s"]' % (CLASS_EVENT))
+            
+            artist_seek = event_details[0].xpath('./h1/text()')
+            artist = artist_seek[0] if (len(artist_seek) > 0) else ""
+            # In case we were called directly with only a link
+            if (event_name == ""): event_name = artist
 
-        # Venue details in form
-        #  <div class="venue-details">
-        #        <h2>GOUDHURST: Parish Church</h2>
-        #        <h4>SUN 11TH DEC, 2016 6:00pm</h4>
-        #    </div>
-        venue_details = event.xpath('//div[@class="%s"]' % (VENUE_CLASS))
-
-        city_loc_details = venue_details[0].xpath('./h2/text()')[0] or ""
-        city = city_loc_details.split(":", 1)[0]
-        if (len(city_loc_details.split(":", 1)) > 1):
-            loc = city_loc_details.split(":", 1)[1]
-        else:
-            loc = ""
-
-        date_time = venue_details[0].xpath('./h4/text()')[0]
-
-        # Prices TBC
-
-        # Some other useful info TBC
-
-        # Store our event
-        event_info = EventInfo(artist=event_name,
-                               support=support_artists,
-                               city=city,
-                               venue=loc,
-                               gig_date=date_time,
-                               event_name=event_name,
-                               link=link)
-
-        self.add_event(event_info)
+            support_artists_seek = event_details[0].xpath(
+                                    './h4[@class="%s"]/text()' % (CLASS_SUPPORT)
+                                   )
+            support_artists = support_artists_seek[0] if (len(support_artists_seek) > 0) else ""
+            
+            # print html.tostring(support_artists[0], pretty_print=True, method="html")
+    
+            # Venue details in form
+            #  <div class="venue-details">
+            #        <h2>GOUDHURST: Parish Church</h2>
+            #        <h4>SUN 11TH DEC, 2016 6:00pm</h4>
+            #    </div>
+            venue_details = event.xpath('//div[@class="%s"]' % (CLASS_VENUE))
+            
+            if (len(venue_details) > 0):
+                city_loc_seek = venue_details[0].xpath('./h2/text()')
+                city_loc_details =  city_loc_seek[0] if (len(city_loc_seek)>1) else ""
+                city = city_loc_details.split(":", 1)[0]
+                if (len(city_loc_details.split(":", 1)) > 1):
+                    loc = city_loc_details.split(":", 1)[1]
+                else:
+                    loc = ""
+        
+                date_time = venue_details[0].xpath('./h4/text()')[0]
+            else:
+                city = ""
+                loc = ""
+                date_time = ""
+            
+            # Some other useful info
+            prices=self.get_prices(link)
+            
+            # Store our event
+            event_info = EventInfo(artist=artist,
+                                   support=support_artists,
+                                   city=city,
+                                   venue=loc,
+                                   gig_date=date_time,
+                                   prices=prices,
+                                   event_name=event_name,
+                                   link=link)
+    
+            self.add_event(event_info)
+        
+        except IndexError:
+            print "Warning : Cannot find event details for %s" % (link)
 
         return event_info
 
