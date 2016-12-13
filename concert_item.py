@@ -44,7 +44,8 @@ class EventInfo(object):
             'city': self._city,
             'venue': self._venue,
             'gig_date': self._gig_date,
-            'prices': self._prices
+            'prices': self._prices,
+            'link': self._link
         }
 
     def __repr__(self):
