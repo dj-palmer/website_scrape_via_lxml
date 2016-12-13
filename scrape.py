@@ -247,19 +247,23 @@ class Scraper(object):
 
         return prices
 
-    def set_max_page_num(self, max_pages=None):
-        max_page_num = self._max_page_num
-        if max_pages :
-            max_page_num = max_pages
-        else:
-            try: 
-                event = self._tree
-                page_seek = event.xpath('//a[@class="%s"][last()]/text()' % CLASS_PAGINATION)
-                max_page_num = page_seek[0] if len(page_seek)>0 else None
-            
-            except IndexError:
-                print "Warning : Cannot find max pagination for %s" % (self._url)
+    def get_site_max_page_num(self):
+        try: 
+            event = self._tree
+            page_seek = event.xpath('//a[@class="%s"][last()]/text()' % CLASS_PAGINATION)
+            max_page_num = page_seek[0] if len(page_seek)>0 else None
+        
+        except IndexError:
+            print "Warning : Cannot find max pagination for %s. Returning last known pagination" % (self._url)
+        
+        return int(max_page_num)
 
+    def set_max_page_num(self, max_pages=None):
+        max_page_num = self._max_page_num 
+        if max_pages: 
+            max_page_num = max_pages
+        else: max_page_num = self.get_site_max_page_num()
+        
         self._max_page_num = int(max_page_num)
 
 def main():
@@ -292,8 +296,7 @@ def do_WGT_scrape(max_pages=1):
         scraper.get_listings()
         scraper.get_events_for_listings()
 
-        print scraper
-
+        print scraper 
 
 if __name__ == "__main__":
     main()
