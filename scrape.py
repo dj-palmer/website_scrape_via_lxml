@@ -19,23 +19,6 @@ CLASS_PRICE = "BuyBox diptych block"
 CLASS_CONCESSION = "concession"
 
 
-class ScraperStore(object):
-
-    """ Storage to collect together all the events our Scraper
-        gets, as it traverses each the indiviudal pages
-    """
-
-    def __init__(self):
-        self._events = {'events': []}
-
-    def __repr__(self):
-        return str(self._events)
-
-    def add_events(self, events):
-        if events is not None:
-            self._events['events'].append(events)
-
-
 class Scraper(object):
 
     """ A class for retrieving a single webpage of listings (from a url),
@@ -71,13 +54,6 @@ class Scraper(object):
         self._url = url
         self._page = requests.get(self._url)
         self._tree = html.fromstring(self._page.content)
-
-    def destroy(self):
-        self._url = None
-        self._page = None
-        self._tree = None
-        self._listings = []
-        self._events = []
 
     def add_listing(self, listing):
         if listing is not None:
