@@ -84,15 +84,26 @@ class Scraper(object):
 
         return self._listings
 
-    def get_events_for_listings(self):
+    def get_events_for_listings(self, verbose=False):
         """ Goes through each event in our listings, and tries to scrape
             the event details
 
             Results are stored in the _events array
         """
-        for listing in self._listings:
-            self.get_event_details(listing._link, listing._event_name)
+        count = 0
+        if verbose == True:
+            print "{ events: {"
 
+        for listing in self._listings:
+            event_info = self.get_event_details(listing._link, listing._event_name)
+            if verbose == True:
+                if event_info:
+                    print ((" " + str(event_info)) if count == 0 else ("," + str(event_info)))
+                    count += 1 
+
+        if verbose == True:
+            print "}"
+        
         return self._events
 
     def get_event_details(self, link=_url, event_name=""):
@@ -166,7 +177,7 @@ class Scraper(object):
 
     def get_venue_details(self):
         """ Scrapes venue details from our webpage and returns them in format
-            {'city': city, 'loc': location, 'time': time} 
+            {'city': city, 'loc': location, 'time': time}
         """
         loc = ""
         city = ""
@@ -179,14 +190,14 @@ class Scraper(object):
             venue_details = event.xpath('//div[@class="%s"]' % (CLASS_VENUE))
 
             if (len(venue_details) > 0):
-                
+
                 city_loc_seek = venue_details[0].xpath('./h2/text()')
                 city_loc_details =  city_loc_seek[0] if (len(city_loc_seek)>0) else ""
                 city = city_loc_details.split(":", 1)[0]
-                
+
                 if (len(city_loc_details.split(":", 1)) > 1):
                     loc = city_loc_details.split(":", 1)[1]
-             
+
                 time_seek = venue_details[0].xpath('./h4/text()')
                 time = time_seek[0] if (len(time_seek)>0) else ""
 
@@ -224,22 +235,22 @@ class Scraper(object):
         return prices
 
     def get_site_max_page_num(self):
-        try: 
+        try:
             event = self._tree
             page_seek = event.xpath('//a[@class="%s"][last()]/text()' % CLASS_PAGINATION)
             max_page_num = page_seek[0] if len(page_seek)>0 else None
-        
+
         except IndexError:
             print "Warning : Cannot find max pagination for %s. Returning last known pagination" % (self._url)
-        
+
         return int(max_page_num)
 
     def set_max_page_num(self, max_pages=None):
-        max_page_num = self._max_page_num 
-        if max_pages: 
+        max_page_num = self._max_page_num
+        if max_pages:
             max_page_num = max_pages
         else: max_page_num = self.get_site_max_page_num()
-        
+
         self._max_page_num = int(max_page_num)
 
 def main():
@@ -247,14 +258,14 @@ def main():
     pages = raw_input("Enter number of listing pages of wegottickets to "
                       "scrape through (or leave blank for all pages): "
             )
-    pageint = int(pages) if pages else None 
-    
+    pageint = int(pages) if pages else None
+
     do_WGT_scrape(pageint)
 
 def do_WGT_scrape(max_pages=1):
     """ Instanciates a Scraper for the wegottickets.co.uk listings URL.
         It begins on the first of the search listing pages, scrapes data from
-        each of their events, and then crawls through the remaining listing 
+        each of their events, and then crawls through the remaining listing
         pages up to the number of pages specified.
 
         If no number of pages specified, the Scraper will try and identify
@@ -262,7 +273,7 @@ def do_WGT_scrape(max_pages=1):
     """
 
     base_url="http://www.wegottickets.com/searchresults/page/%s/all#paginate"
-    
+
     scraper = Scraper()
     scraper.update()
     scraper.set_max_page_num(max_pages)
@@ -270,9 +281,10 @@ def do_WGT_scrape(max_pages=1):
     for pagenum in range(1, scraper._max_page_num+1):
         scraper.update(base_url % (pagenum))
         scraper.get_listings()
-        scraper.get_events_for_listings()
 
-        print scraper 
+    scraper.get_events_for_listings(verbose=True)
+    
+    result = scraper
 
 if __name__ == "__main__":
     main()
