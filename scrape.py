@@ -260,7 +260,7 @@ class Scraper(object):
             except IndexError:
                 print "Warning : Cannot find max pagination for %s" % (self._url)
 
-        self._max_page_num = max_page_num
+        self._max_page_num = int(max_page_num)
 
 def main():
 
