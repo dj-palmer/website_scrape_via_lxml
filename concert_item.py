@@ -18,10 +18,11 @@ class EventInfo(object):
 
     """ Full event info """
 
-    def __init__(self, event_name="", link="", artist="", city="", venue="",
+    def __init__(self, event_name="", link="", artist="", support="", city="", venue="",
                  gig_date="", price=""):
         # Details asked for in our exercise
         self._artist = artist
+        self._support = support
         self._city = city
         self._venue = venue
         self._gig_date = gig_date
@@ -34,14 +35,17 @@ class EventInfo(object):
         self._website = ""
 
     def get_json(self):
-        """ JSON representation of a concert event. Note this  """
+        """ JSON representation of a concert event  """
         return {
-            'artist': self._artist,
+            'artists': {
+                'main': self._artist,
+                'support': self._support
+            },
             'city': self._city,
             'venue': self._venue,
             'gig_date': self._gig_date,
-            'price': self._price
+            'prices': self._price
         }
 
     def __repr__(self):
-        return str(self._get_json())
+        return str(self.get_json())
