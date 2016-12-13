@@ -17,7 +17,7 @@ CLASS_SUPPORT = "support"
 CLASS_VENUE = "venue-details"
 CLASS_PRICE = "BuyBox diptych block"
 CLASS_CONCESSION = "concession"
-
+CURRENCY = "£"
 
 class Scraper(object):
 
@@ -38,15 +38,15 @@ class Scraper(object):
         self._events = []
 
     def __repr__(self):
-        return str(
-                  {'concerts': [{'listings': self._listings},
-                                {'events': self._events}]}
+        return (
+                "{'concerts': [{'listings': %s, {'events': %s}]}" %
+                 (self._listings, self._events)
                )
 
     def __str__(self):
         return (
                 "{Concerts: \n   Listings : %s \n   Events : %s }" %
-                (str(self._listings), str(self._events))
+                 (self._listings, self._events)
         )
 
     def update(self, url=URL):
@@ -211,9 +211,14 @@ class Scraper(object):
 
             # Now try to scrape pricing and ticket type info from the block
             for price in prices_seek:
-                amount = price.xpath('.//strong/text()')
-                concession_seek = price.xpath('.//a[@class="concession"]/text()')
-                concession = concession_seek[0] if len(concession_seek)>0 else None
+                amount = None
+                amount_seek = price.xpath('.//strong/text()')
+                amount_cur = amount_seek[0] if len(amount_seek)>0 else None
+                if amount_cur :
+                    # strip the currency symbol from our amount and print to 2dp
+                    amount = "%.2f" % (float(amount_cur[amount_cur.find(CURRENCY.decode("utf8"))+1:]))
+                conc_seek = price.xpath('.//a[@class="concession"]/text()')
+                concession = conc_seek[0] if len(conc_seek)>0 else None
 
                 prices.update({"type": concession or "All", "amount": amount})
 
