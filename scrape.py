@@ -3,6 +3,7 @@
 
 import pdb
 import requests
+import argparse
 from lxml import html
 from concert_item import SummaryListing, EventInfo
 
@@ -18,7 +19,7 @@ CLASS_VENUE = "venue-details"
 CLASS_PRICE = "BuyBox diptych block"
 CLASS_CONCESSION = "concession"
 CLASS_PAGINATION = "pagination_link"
-OUTPUT = "/tmp/events.json"
+
 
 class Scraper(object):
 
@@ -259,17 +260,25 @@ class Scraper(object):
 
         self._max_page_num = int(max_page_num)
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+                description=
+                    "Script to scrape the wegottickets.com website of event "
+                    "data. By default the script outputs to screen, but you "
+                    "can specify an output file for the event JSON too"
+             )
+    parser.add_argument('-of', '--output_file', default="/tmp/events.json", help="Output file for JSON")
+    parser.add_argument('-v', '--verbose', action='store_true', help="Outputs event JSON to screen as we find it")
+    parser.add_argument('-p', '--page_limit', help="max number of listing pages to scrape")
+    args = parser.parse_args()
+    return args
+
 def main():
-
-    pages = raw_input("Enter number of listing pages of wegottickets to "
-                      "scrape through (or leave blank for all pages): "
-            )
-    pageint = int(pages) if pages else None
-
-    do_WGT_scrape(pageint)
+    args = parse_args()
+    do_WGT_scrape()
 
 def do_WGT_scrape(max_pages=1):
-    """ Instanciates a Scraper for the wegottickets.co.uk listings URL.
+    """ Instanciates a Scraper for the wegottickets.com listings URL.
         It begins on the first of the search listing pages, then crawls through 
         the remaining listing pages up to the number of pages specified.
 
@@ -281,33 +290,30 @@ def do_WGT_scrape(max_pages=1):
 
         Finally the script will output to 
     """
-
     base_url="http://www.wegottickets.com/searchresults/page/%s/all#paginate"
+    verbose = args.verbose or False
+    outfile = args.output_file or None
+    pageint = int(args.page_limit) or None
 
+    # Get listings on each search results page
     scraper = Scraper()
     scraper.update()
     scraper.set_max_page_num(max_pages)
-
     for pagenum in range(1, scraper._max_page_num+1):
         scraper.update(base_url % (pagenum))
         scraper.get_listings()
 
-    scraper.get_events_for_listings(verbose=True)
+    # Events
+    scraper.get_events_for_listings(verbose=verbose)
 
-    while True:
-        ans = raw_input("Would you like to produce JSON output to file %s ('y/n')" % (OUTPUT))
-        if not ans:
-            continue
-        if ans not in ['y', 'Y', 'n', 'N']:
-            print 'please enter y or n.'
-            continue
-        if ans == 'y' or ans == 'Y':
-                of = open(OUTPUT, 'w')
-                of.write(scraper.get_events_json())
-                of.close
-                return False
-        if ans == 'n' or ans == 'N':
-            return False
+    # Output
+    if outfile:
+        fw = open(outfile, 'w')
+        fw.write(scraper.get_events_json())
+        fw.close
+    else:
+        print scraper.get_events_json()
+
 
 if __name__ == "__main__":
     main()
