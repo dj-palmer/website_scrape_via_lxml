@@ -63,12 +63,9 @@ class Scraper(object):
 
     def update(self, url=URL):
         """ parse the html of the given url """
-        try:
-            self._url = url
-            self._page = requests.get(self._url)
-            self._tree = html.fromstring(self._page.content)
-        except:
-            raise Exception("Invalid url")
+        self._url = url
+        self._page = requests.get(self._url)
+        self._tree = html.fromstring(self._page.content)
 
     def destroy(self):
         self._url = None
