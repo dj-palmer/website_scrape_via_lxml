@@ -254,7 +254,6 @@ class Scraper(object):
         else:
             try: 
                 event = self._tree
-                pdb.set_trace()
                 page_seek = event.xpath('//a[@class="%s"][last()]/text()' % CLASS_PAGINATION)
                 max_page_num = page_seek[0] if len(page_seek)>0 else None
             
