@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import pdb
+# import pdb
 import requests
 import argparse
 from lxml import html
@@ -20,6 +20,7 @@ CLASS_PRICE = "BuyBox diptych block"
 CLASS_CONCESSION = "concession"
 CLASS_PAGINATION = "pagination_link"
 CURRENCY = "£"
+
 
 class Scraper(object):
 
@@ -43,13 +44,13 @@ class Scraper(object):
     def __repr__(self):
         return (
                 "{'concerts': [{'listings': %s, {'events': %s}]}" %
-                 (self._listings, self._events)
+                (self._listings, self._events)
                )
 
     def __str__(self):
         return (
                 "{Concerts: \n   Listings : %s \n   Events : %s }" %
-                 (self._listings, self._events)
+                (self._listings, self._events)
         )
 
     def get_events_json(self):
@@ -98,19 +99,19 @@ class Scraper(object):
             Results are stored in the _events array
         """
         count = 0
-        if verbose == True:
+        if verbose:
             print "{ events: ["
 
         for listing in self._listings:
             event_info = self.get_event_details(listing._link, listing._event_name)
-            if verbose == True:
+            if verbose:
                 if event_info:
                     print ((" " + str(event_info)) if count == 0 else ("," + str(event_info)))
-                    count += 1 
+                    count += 1
 
-        if verbose == True:
+        if verbose:
             print "]}"
-        
+
         return self._events
 
     def get_event_details(self, link, event_name=""):
@@ -126,11 +127,12 @@ class Scraper(object):
         try:
             artist = self.get_artist()
             # In case we were called directly with only a link
-            if (event_name == ""): event_name = artist
+            if (event_name == ""):
+                event_name = artist
 
             support = self.get_support_act()
-            prices=self.get_prices()
-            venue_details=self.get_venue_details()
+            prices = self.get_prices()
+            venue_details = self.get_venue_details()
 
             # Store our event
             event_info = EventInfo(artist=artist,
@@ -153,7 +155,7 @@ class Scraper(object):
         artist = ""
         event = self._tree
 
-        try :
+        try:
             artist_details = event.xpath('//div[@class="%s"]' % (CLASS_EVENT))
 
             artist_seek = artist_details[0].xpath('./h1/text()')
@@ -168,7 +170,7 @@ class Scraper(object):
         support = ""
         event = self._tree
 
-        try :
+        try:
             support_details = event.xpath('//div[@class="%s"]' % (CLASS_EVENT))
 
             support_seek = support_details[0].xpath(
@@ -193,20 +195,20 @@ class Scraper(object):
         venue = {'city': city, 'loc': loc, 'time': time}
         event = self._tree
 
-        try :
+        try:
             venue_details = event.xpath('//div[@class="%s"]' % (CLASS_VENUE))
 
             if (len(venue_details) > 0):
 
                 city_loc_seek = venue_details[0].xpath('./h2/text()')
-                city_loc_details =  city_loc_seek[0] if (len(city_loc_seek)>0) else ""
+                city_loc_details = city_loc_seek[0] if (len(city_loc_seek) > 0) else ""
                 city = city_loc_details.split(":", 1)[0]
 
                 if (len(city_loc_details.split(":", 1)) > 1):
                     loc = city_loc_details.split(":", 1)[1]
 
                 time_seek = venue_details[0].xpath('./h4/text()')
-                time = time_seek[0] if (len(time_seek)>0) else ""
+                time = time_seek[0] if (len(time_seek) > 0) else ""
 
             venue.update({'city': city})
             venue.update({'loc': loc})
@@ -224,22 +226,22 @@ class Scraper(object):
         prices = []
         event = self._tree
 
-        try :
+        try:
             # Get a list of pricing blocks
             prices_seek = event.xpath('//div[@class="%s"]' % CLASS_PRICE)
 
-            # Now try to scrape pricing and ticket type info from the block
+            # Now try to scrape pricing and ticket type info from each block
             for price in prices_seek:
                 amount = None
                 amount_seek = price.xpath('.//strong/text()')
-                amount_cur = amount_seek[0] if len(amount_seek)>0 else None
-                if amount_cur :
+                amount_cur = amount_seek[0] if len(amount_seek) > 0 else None
+                if amount_cur:
                     # strip the currency symbol from our amount and print to 2dp
                     amount = "%.2f" % (float(amount_cur[amount_cur.find(CURRENCY.decode("utf8"))+1:]))
                 conc_seek = price.xpath('.//a[@class="concession"]/text()')
-                concession = conc_seek[0] if len(conc_seek)>0 else None
+                concession = conc_seek[0] if len(conc_seek) > 0 else None
 
-                if amount :
+                if amount:
                     prices.append({"type": concession or "All", "amount": amount})
 
         except IndexError:
@@ -251,7 +253,7 @@ class Scraper(object):
         try:
             event = self._tree
             page_seek = event.xpath('//a[@class="%s"][last()]/text()' % CLASS_PAGINATION)
-            max_page_num = page_seek[0] if len(page_seek)>0 else None
+            max_page_num = page_seek[0] if len(page_seek) > 0 else None
 
         except IndexError:
             print "Warning : Cannot find max pagination for %s. Returning last known pagination" % (self._url)
@@ -262,28 +264,31 @@ class Scraper(object):
         max_page_num = self._max_page_num
         if max_pages:
             max_page_num = max_pages
-        else: max_page_num = self.get_site_max_page_num()
+        else:
+            max_page_num = self.get_site_max_page_num()
 
         self._max_page_num = int(max_page_num)
+
 
 def main():
     do_WGT_scrape()
 
+
 def do_WGT_scrape(max_pages=1):
     """ Instanciates a Scraper for the wegottickets.com listings URL.
-        It begins on the first of the search listing pages, then crawls through 
+        It begins on the first of the search listing pages, then crawls through
         the remaining listing pages up to the number of pages specified.
 
         If no number of pages specified, the Scraper will try and identify
         the max pagination and crawl all listings.
 
-        Once all listings have been identified, the scraper will scrape each 
+        Once all listings have been identified, the scraper will scrape each
         event page for those listings
 
-        Finally the script will output to 
+        Finally the script will output to
     """
     args = parse_args()
-    base_url="http://www.wegottickets.com/searchresults/page/%s/all#paginate"
+    base_url = "http://www.wegottickets.com/searchresults/page/%s/all#paginate"
     verbose = args.verbose or False
     outfile = args.output_file or None
     max_pages = None if args.page_limit is None else int(args.page_limit)
@@ -307,17 +312,21 @@ def do_WGT_scrape(max_pages=1):
     else:
         print scraper.get_events_json()
 
+
 def parse_args():
     parser = argparse.ArgumentParser(
-                description=
-                    "Script to scrape the wegottickets.com website of event "
-                    "data. By default the script outputs to screen at the very "
-                    "end of our scraping, but you can specify an output file "
-                    "for the event JSON too"
+                description =
+                "Script to scrape the wegottickets.com website of event "
+                "data. By default the script outputs to screen at the very "
+                "end of our scraping, but you can specify an output file "
+                "for the event JSON too"
              )
-    parser.add_argument('-of', '--output_file', default="/tmp/events.json", help="Output file for JSON")
-    parser.add_argument('-v', '--verbose', action='store_true', help="Outputs event JSON to screen as we find it")
-    parser.add_argument('-p', '--page_limit', help="max number of listing pages to scrape")
+    parser.add_argument('-of', '--output_file', default="/tmp/events.json",
+                        help="Output file for JSON")
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help="Outputs event JSON to screen as we find it")
+    parser.add_argument('-p', '--page_limit',
+                        help="max number of listing pages to scrape")
     args = parser.parse_args()
     return args
 

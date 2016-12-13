@@ -49,4 +49,4 @@ class EventInfo(object):
         }
 
     def __repr__(self):
-        return "%s" %(self.get_json())
+        return "%s" % (self.get_json())
