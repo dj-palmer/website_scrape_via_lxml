@@ -18,6 +18,7 @@ CLASS_VENUE = "venue-details"
 CLASS_PRICE = "BuyBox diptych block"
 CLASS_CONCESSION = "concession"
 CLASS_PAGINATION = "pagination_link"
+OUTPUT = "/tmp/events.json"
 
 class Scraper(object):
 
@@ -48,6 +49,11 @@ class Scraper(object):
         return (
                 "{Concerts: \n   Listings : %s \n   Events : %s }" %
                 (str(self._listings), str(self._events))
+        )
+
+    def get_events_json(self):
+        return (
+                "{'Events' : %s }" % str(self._events)
         )
 
     def update(self, url=URL):
@@ -264,12 +270,16 @@ def main():
 
 def do_WGT_scrape(max_pages=1):
     """ Instanciates a Scraper for the wegottickets.co.uk listings URL.
-        It begins on the first of the search listing pages, scrapes data from
-        each of their events, and then crawls through the remaining listing
-        pages up to the number of pages specified.
+        It begins on the first of the search listing pages, then crawls through 
+        the remaining listing pages up to the number of pages specified.
 
         If no number of pages specified, the Scraper will try and identify
-        the max pagination and crawl all listings
+        the max pagination and crawl all listings.
+
+        Once all listings have been identified, the scraper will scrape each 
+        event page for those listings
+
+        Finally the script will output to 
     """
 
     base_url="http://www.wegottickets.com/searchresults/page/%s/all#paginate"
@@ -283,8 +293,21 @@ def do_WGT_scrape(max_pages=1):
         scraper.get_listings()
 
     scraper.get_events_for_listings(verbose=True)
-    
-    result = scraper
+
+    while True:
+        ans = raw_input("Would you like to produce JSON output to file %s ('y/n')" % (OUTPUT))
+        if not ans:
+            continue
+        if ans not in ['y', 'Y', 'n', 'N']:
+            print 'please enter y or n.'
+            continue
+        if ans == 'y' or ans == 'Y':
+                of = open(OUTPUT, 'w')
+                of.write(scraper.get_events_json())
+                of.close
+                return False
+        if ans == 'n' or ans == 'N':
+            return False
 
 if __name__ == "__main__":
     main()
