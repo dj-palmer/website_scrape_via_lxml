@@ -113,7 +113,7 @@ class Scraper(object):
         
         return self._events
 
-    def get_event_details(self, link=_url, event_name=""):
+    def get_event_details(self, link, event_name=""):
         """ For our page, comb for event details using an xpath search
 
             Result is stored in the _events array
