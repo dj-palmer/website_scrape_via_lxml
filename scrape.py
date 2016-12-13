@@ -250,6 +250,9 @@ class Scraper(object):
         return prices
 
     def get_site_max_page_num(self):
+        """ Scrapes the listings page to try and identify the max number of
+            listing pages we can crawl through
+        """
         try:
             event = self._tree
             page_seek = event.xpath('//a[@class="%s"][last()]/text()' % CLASS_PAGINATION)
@@ -261,6 +264,9 @@ class Scraper(object):
         return int(max_page_num)
 
     def set_max_page_num(self, max_pages=None):
+        """ Allows us to specify the max number of pages we want to scrape
+            with our Scraper
+        """
         max_page_num = self._max_page_num
         if max_pages:
             max_page_num = max_pages
@@ -283,9 +289,10 @@ def do_WGT_scrape(max_pages=1):
         the max pagination and crawl all listings.
 
         Once all listings have been identified, the scraper will scrape each
-        event page for those listings
+        event page for those listings and output to screen.
 
-        Finally the script will output to
+        Or the script will output to a JSON file if the output_file option is
+        specified.
     """
     args = parse_args()
     base_url = "http://www.wegottickets.com/searchresults/page/%s/all#paginate"
