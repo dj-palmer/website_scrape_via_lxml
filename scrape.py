@@ -221,7 +221,7 @@ class Scraper(object):
 
     def get_prices(self):
         """ Scrapes prices from our webpage and returns them in format
-            { type : 'price_type', price : '£X.XX'}
+            { type : 'price_type', price : 'X.XX'}
         """
         prices = []
         event = self._tree
