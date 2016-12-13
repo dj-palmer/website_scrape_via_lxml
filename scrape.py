@@ -99,7 +99,7 @@ class Scraper(object):
         """
         count = 0
         if verbose == True:
-            print "{ events: {"
+            print "{ events: ["
 
         for listing in self._listings:
             event_info = self.get_event_details(listing._link, listing._event_name)
@@ -109,7 +109,7 @@ class Scraper(object):
                     count += 1 
 
         if verbose == True:
-            print "}"
+            print "]}"
         
         return self._events
 
