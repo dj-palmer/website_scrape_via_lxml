@@ -12,6 +12,7 @@ LISTING_CLASS = "event_link"
 EVENT_CLASS = "left full-width-mobile event-information event-width"
 SUPPORT_CLASS = "support"
 VENUE_CLASS = "venue-details"
+CLASS_PRICE = "BuyBox diptych block"
 
 
 class ScraperStore(object):
@@ -167,12 +168,69 @@ class Scraper(object):
 
         return event_info
 
+    def get_prices(self, link=_url):
+        """ Scrapes prices from a webpage and returns them in a JSON format
+            { type : 'price_type', price : '£X.XX'}
+        """
+        # Prices TBC
+        # XPATH = //*[@id="content"]/div[2]/div[5]'
+        # <div class="block-group block-group-flex">
+        # <div class="BuyBox diptych block">
+        #     <div>
+        #         <div>£10.00 + £1.00 Booking fee = <strong>£11.00</strong></div>
+        #         <br>
+        #         <div></div>
+        #         <div>&nbsp;</div>
+        #         <div><br><a href="http://www.wegottickets.com/faqs/22">No reallocation</a><br>All ages</div>
+        #         
+        # <span><a href="http://www.wegottickets.com/faqs/7" class="offsaleLink">Not currently available</a></span>
+        # 
+        #         <span class="VariantAlert"></span>
+        #     </div>
+        # </div>
+        # 
+        # <div class="BuyBox diptych block">
+        #     <div>
+        #         <div>£5.00 + £0.50 Booking fee = <strong>£5.50</strong></div>
+        #         <br>
+        #         <div></div>
+        #         <div><a href="http://www.wegottickets.com/faqs/8" class="concession">Children</a></div>
+        #         <div><br><a href="http://www.wegottickets.com/faqs/22">No reallocation</a><br>All ages</div>
+        #         
+        # <span><a href="http://www.wegottickets.com/faqs/7" class="offsaleLink">Not currently available</a></span>
+        # 
+        #         <span class="VariantAlert"></span>
+        #     </div>
+        # </div>
+        # </div>
+        # //*[@id="Content"]/div[2]/div[5]/div
+        prices = {}
+        event = self._tree
+        
+        try :
+            # pdb.set_trace()
+            # Get a list of pricing blocks
+            prices_seek = event.xpath('//div[@class="%s"]' % CLASS_PRICE)
+            
+            # Now try to scrape pricing and ticket type info from the block
+            for price in prices_seek:
+                amount = price.xpath('.//strong/text()')
+                concession_seek = price.xpath('.//a[@class="concession"]/text()')
+                concession = concession_seek[0] if len(concession_seek)>0 else None
+
+                prices.update({"type": concession or "All", "amount": amount})
+
+        except IndexError:
+            print "Warning : Cannot find prices for %s" % (link)
+        
+        return str(prices)
+
 
 def main():
-    scraper = Scraper()
-    scraper.update("http://www.wegottickets.com/event/371642")
-    print scraper.get_event_details()
-
+    # scraper = Scraper()
+    # scraper.update("http://www.wegottickets.com/event/381189")
+    # print scraper.get_prices()
+    do_scrape()
 
 def do_scrape():
 
@@ -186,6 +244,7 @@ def do_scrape():
     scraper.get_events_for_listings()
     # print html.tostring(listings[0], pretty_print=True, method="html")
 
+    print scraper
 
 if __name__ == "__main__":
     main()
