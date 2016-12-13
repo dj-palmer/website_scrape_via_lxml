@@ -6,10 +6,10 @@ import requests
 from lxml import html
 from concert_item import SummaryListing, EventInfo
 
-# Some global constants - Details of the website you want to scrape 
-# listings from. Where appropriate we can use specific classes the
-# website has for data items to search, rather than reference divisions of
-# the website that are likely to change per event
+# Some global constants - containing details of the website you want to scrape.
+# When scraping I prefer to use specific classes of data items to search,
+# rather than reference divisions of the website that are likely
+# to change per event
 URL = "http://www.wegottickets.com/searchresults/all"
 CLASS_LISTING = "event_link"
 CLASS_EVENT = "left full-width-mobile event-information event-width"
@@ -145,7 +145,7 @@ class Scraper(object):
             # Note: We could just get our event name from the one we got from
             # the listing, but allowing for use of this method on its own.
             event_details = event.xpath('//div[@class="%s"]' % (CLASS_EVENT))
-            
+
             artist_seek = event_details[0].xpath('./h1/text()')
             artist = artist_seek[0] if (len(artist_seek) > 0) else ""
             # In case we were called directly with only a link
@@ -155,16 +155,16 @@ class Scraper(object):
                                     './h4[@class="%s"]/text()' % (CLASS_SUPPORT)
                                    )
             support_artists = support_artists_seek[0] if (len(support_artists_seek) > 0) else ""
-            
+
             # print html.tostring(support_artists[0], pretty_print=True, method="html")
-    
+
             # Venue details in form
             #  <div class="venue-details">
             #        <h2>GOUDHURST: Parish Church</h2>
             #        <h4>SUN 11TH DEC, 2016 6:00pm</h4>
             #    </div>
             venue_details = event.xpath('//div[@class="%s"]' % (CLASS_VENUE))
-            
+
             if (len(venue_details) > 0):
                 city_loc_seek = venue_details[0].xpath('./h2/text()')
                 city_loc_details =  city_loc_seek[0] if (len(city_loc_seek)>1) else ""
@@ -173,16 +173,16 @@ class Scraper(object):
                     loc = city_loc_details.split(":", 1)[1]
                 else:
                     loc = ""
-        
+
                 date_time = venue_details[0].xpath('./h4/text()')[0]
             else:
                 city = ""
                 loc = ""
                 date_time = ""
-            
+
             # Some other useful info
             prices=self.get_prices(link)
-            
+
             # Store our event
             event_info = EventInfo(artist=artist,
                                    support=support_artists,
@@ -192,9 +192,9 @@ class Scraper(object):
                                    prices=prices,
                                    event_name=event_name,
                                    link=link)
-    
+
             self.add_event(event_info)
-        
+
         except IndexError:
             print "Warning : Cannot find event details for %s" % (link)
 
@@ -214,13 +214,13 @@ class Scraper(object):
         #         <div></div>
         #         <div>&nbsp;</div>
         #         <div><br><a href="http://www.wegottickets.com/faqs/22">No reallocation</a><br>All ages</div>
-        #         
+        #
         # <span><a href="http://www.wegottickets.com/faqs/7" class="offsaleLink">Not currently available</a></span>
-        # 
+        #
         #         <span class="VariantAlert"></span>
         #     </div>
         # </div>
-        # 
+        #
         # <div class="BuyBox diptych block">
         #     <div>
         #         <div>£5.00 + £0.50 Booking fee = <strong>£5.50</strong></div>
@@ -228,9 +228,9 @@ class Scraper(object):
         #         <div></div>
         #         <div><a href="http://www.wegottickets.com/faqs/8" class="concession">Children</a></div>
         #         <div><br><a href="http://www.wegottickets.com/faqs/22">No reallocation</a><br>All ages</div>
-        #         
+        #
         # <span><a href="http://www.wegottickets.com/faqs/7" class="offsaleLink">Not currently available</a></span>
-        # 
+        #
         #         <span class="VariantAlert"></span>
         #     </div>
         # </div>
@@ -238,12 +238,12 @@ class Scraper(object):
         # //*[@id="Content"]/div[2]/div[5]/div
         prices = {}
         event = self._tree
-        
+
         try :
             # pdb.set_trace()
             # Get a list of pricing blocks
             prices_seek = event.xpath('//div[@class="%s"]' % CLASS_PRICE)
-            
+
             # Now try to scrape pricing and ticket type info from the block
             for price in prices_seek:
                 amount = price.xpath('.//strong/text()')
@@ -254,7 +254,7 @@ class Scraper(object):
 
         except IndexError:
             print "Warning : Cannot find prices for %s" % (link)
-        
+
         return str(prices)
 
 
