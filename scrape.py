@@ -263,25 +263,37 @@ class Scraper(object):
         self._max_page_num = max_page_num
 
 def main():
+
+    pages = raw_input("Enter number of listing pages of wegottickets to "
+                      "scrape through (or leave blank for all pages): "
+            )
+    pageint = int(pages) if pages else None 
+    
+    do_WGT_scrape(pageint)
+
+def do_WGT_scrape(max_pages=1):
+    """ Instanciates a Scraper for the wegottickets.co.uk listings URL.
+        It begins on the first of the search listing pages, scrapes data from
+        each of their events, and then crawls through the remaining listing 
+        pages up to the number of pages specified.
+
+        If no number of pages specified, the Scraper will try and identify
+        the max pagination and crawl all listings
+    """
+
+    base_url="http://www.wegottickets.com/searchresults/page/%s/all#paginate"
+    
     scraper = Scraper()
     scraper.update()
-    scraper.set_max_page_num()
-    print scraper._max_page_num
-    # do_scrape()
+    scraper.set_max_page_num(max_pages)
 
-def do_scrape():
+    for pagenum in range(1, scraper._max_page_num+1):
+        scraper.update(base_url % (pagenum))
+        scraper.get_listings()
+        scraper.get_events_for_listings()
 
-    scraper = Scraper()
-    # Scraping one web page as proof of concept, then can loop through these
-    # steps for each page.
-    # Using the 'all' search page to find the basic listing details, and then
-    # we'll use the link we find to gather more details
-    scraper.update(URL)
-    scraper.get_listings()
-    scraper.get_events_for_listings()
-    # print html.tostring(listings[0], pretty_print=True, method="html")
+        print scraper
 
-    print scraper
 
 if __name__ == "__main__":
     main()
