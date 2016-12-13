@@ -221,7 +221,7 @@ class Scraper(object):
         """ Scrapes prices from our webpage and returns them in format
             { type : 'price_type', price : '£X.XX'}
         """
-        prices = {}
+        prices = []
         event = self._tree
 
         try :
@@ -239,7 +239,8 @@ class Scraper(object):
                 conc_seek = price.xpath('.//a[@class="concession"]/text()')
                 concession = conc_seek[0] if len(conc_seek)>0 else None
 
-                prices.update({"type": concession or "All", "amount": amount})
+                if amount :
+                    prices.append({"type": concession or "All", "amount": amount})
 
         except IndexError:
             print "Warning : Cannot find prices for %s" % (self._url)

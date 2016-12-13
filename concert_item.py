@@ -19,7 +19,7 @@ class EventInfo(object):
     """ Full event info """
 
     def __init__(self, event_name="", link="", artist="", support="",
-                 city="", venue="", gig_date="", prices={}):
+                 city="", venue="", gig_date="", prices=[]):
         # Details asked for in our exercise
         self._artist = artist
         self._support = support
