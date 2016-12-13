@@ -130,9 +130,9 @@ class Scraper(object):
         # Note: We could just get our event name from the one we got from
         # the listing, but we may want to re-use this method directly.
         event_details = event.xpath('//div[@class="%s"]' % (EVENT_CLASS))
-        event_name = event_details[0].xpath('//h2/text()')[0]
+        event_name = event_details[0].xpath('./h1/text()')[0]
         support_artists = event_details[0].xpath(
-                            '//h4[@class="%s"]/text()' % (SUPPORT_CLASS)
+                            './h4[@class="%s"]/text()' % (SUPPORT_CLASS)
                           )[0]
         # print html.tostring(support_artists[0], pretty_print=True, \
         # method="html")
@@ -144,21 +144,20 @@ class Scraper(object):
         #    </div>
         venue_details = event.xpath('//div[@class="%s"]' % (VENUE_CLASS))
 
-        city_loc_details = venue_details[0].xpath('//h2/text()')[0] or ""
+        city_loc_details = venue_details[0].xpath('./h2/text()')[0] or ""
         city = city_loc_details.split(":", 1)[0]
         if (len(city_loc_details.split(":", 1)) > 1):
             loc = city_loc_details.split(":", 1)[1]
         else:
             loc = ""
 
-        date_time = venue_details[0].xpath('//h4/text()')[0]
+        date_time = venue_details[0].xpath('./h4/text()')[0]
 
         # Prices TBC
 
         # Some other useful info TBC
 
         # Store our event
-        pdb.set_trace()
         event_info = EventInfo(artist=event_name,
                                support=support_artists,
                                city=city,
