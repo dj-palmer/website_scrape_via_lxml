@@ -260,21 +260,7 @@ class Scraper(object):
 
         self._max_page_num = int(max_page_num)
 
-def parse_args():
-    parser = argparse.ArgumentParser(
-                description=
-                    "Script to scrape the wegottickets.com website of event "
-                    "data. By default the script outputs to screen, but you "
-                    "can specify an output file for the event JSON too"
-             )
-    parser.add_argument('-of', '--output_file', default="/tmp/events.json", help="Output file for JSON")
-    parser.add_argument('-v', '--verbose', action='store_true', help="Outputs event JSON to screen as we find it")
-    parser.add_argument('-p', '--page_limit', help="max number of listing pages to scrape")
-    args = parser.parse_args()
-    return args
-
 def main():
-    args = parse_args()
     do_WGT_scrape()
 
 def do_WGT_scrape(max_pages=1):
@@ -290,20 +276,22 @@ def do_WGT_scrape(max_pages=1):
 
         Finally the script will output to 
     """
+    args = parse_args()
     base_url="http://www.wegottickets.com/searchresults/page/%s/all#paginate"
     verbose = args.verbose or False
     outfile = args.output_file or None
-    pageint = int(args.page_limit) or None
+    max_pages = None if args.page_limit is None else int(args.page_limit)
 
     # Get listings on each search results page
     scraper = Scraper()
     scraper.update()
+    pdb.set_trace()
     scraper.set_max_page_num(max_pages)
     for pagenum in range(1, scraper._max_page_num+1):
         scraper.update(base_url % (pagenum))
         scraper.get_listings()
 
-    # Events
+    # Scrape Events
     scraper.get_events_for_listings(verbose=verbose)
 
     # Output
@@ -313,6 +301,20 @@ def do_WGT_scrape(max_pages=1):
         fw.close
     else:
         print scraper.get_events_json()
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+                description=
+                    "Script to scrape the wegottickets.com website of event "
+                    "data. By default the script outputs to screen at the very "
+                    "end of our scraping, but you can specify an output file "
+                    "for the event JSON too"
+             )
+    parser.add_argument('-of', '--output_file', default="/tmp/events.json", help="Output file for JSON")
+    parser.add_argument('-v', '--verbose', action='store_true', help="Outputs event JSON to screen as we find it")
+    parser.add_argument('-p', '--page_limit', help="max number of listing pages to scrape")
+    args = parser.parse_args()
+    return args
 
 
 if __name__ == "__main__":
