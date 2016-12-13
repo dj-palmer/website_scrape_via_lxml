@@ -17,7 +17,7 @@ CLASS_SUPPORT = "support"
 CLASS_VENUE = "venue-details"
 CLASS_PRICE = "BuyBox diptych block"
 CLASS_CONCESSION = "concession"
-
+CLASS_PAGINATION = "pagination_link"
 
 class ScraperStore(object):
 
@@ -53,6 +53,7 @@ class Scraper(object):
         self._listings = []
         # An array of EventInfo objects
         self._events = []
+        self._max_page_num = 1
 
     def __repr__(self):
         return str(
@@ -67,7 +68,7 @@ class Scraper(object):
         )
 
     def update(self, url=URL):
-        """ parses the html of the given url """
+        """ parses the html of the given url into our element tree """
         self._url = url
         self._page = requests.get(self._url)
         self._tree = html.fromstring(self._page.content)
@@ -246,12 +247,28 @@ class Scraper(object):
 
         return prices
 
+    def set_max_page_num(self, max_pages=None):
+        max_page_num = self._max_page_num
+        if max_pages :
+            max_page_num = max_pages
+        else:
+            try: 
+                event = self._tree
+                pdb.set_trace()
+                page_seek = event.xpath('//a[@class="%s"][last()]/text()' % CLASS_PAGINATION)
+                max_page_num = page_seek[0] if len(page_seek)>0 else None
+            
+            except IndexError:
+                print "Warning : Cannot find max pagination for %s" % (self._url)
+
+        self._max_page_num = max_page_num
 
 def main():
-    # scraper = Scraper()
-    # scraper.update("http://www.wegottickets.com/event/381189")
-    # print scraper.get_prices()
-    do_scrape()
+    scraper = Scraper()
+    scraper.update()
+    scraper.set_max_page_num()
+    print scraper._max_page_num
+    # do_scrape()
 
 def do_scrape():
 
